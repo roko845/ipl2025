@@ -1,0 +1,1471 @@
+﻿1: Draw an ER for Bank database with atleast 5 entities and convert them into tables.
+Perform DDL on above converted tables.
+1. Create tables with all constraints
+2. Create views on any two tables using join conditions
+3. Create index called CustomerId. Entries should be in ascending order by customer name.
+4. Create sequence on Acctno.
+
+
+—
+CREATE TABLE Customer (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Address VARCHAR(200),
+    Phone VARCHAR(15)
+);
+
+
+CREATE TABLE Branch (
+    BranchID INT AUTO_INCREMENT PRIMARY KEY,
+    BranchName VARCHAR(100) NOT NULL,
+    Location VARCHAR(100)
+);
+
+
+CREATE TABLE Account (
+    AcctNo INT AUTO_INCREMENT PRIMARY KEY,
+    Balance DECIMAL(12,2) CHECK (Balance >= 0),
+    CustomerID INT,
+    BranchID INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID),
+    FOREIGN KEY (BranchID) REFERENCES Branch(BranchID)
+);
+
+
+CREATE TABLE Loan (
+    LoanID INT AUTO_INCREMENT PRIMARY KEY,
+    Amount DECIMAL(10,2) NOT NULL CHECK (Amount > 0),
+    CustomerID INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)
+);
+
+
+CREATE TABLE Transaction (
+    TxnID INT AUTO_INCREMENT PRIMARY KEY,
+    AcctNo INT,
+    TxnType VARCHAR(20) CHECK (TxnType IN ('Deposit', 'Withdrawal', 'Transfer')),
+    Amount DECIMAL(10,2) CHECK (Amount > 0),
+    TxnDate DATE,
+    FOREIGN KEY (AcctNo) REFERENCES Account(AcctNo)
+);
+
+
+-- INSERT DEMO DATA
+
+
+-- Customers (Indian names and addresses)
+INSERT INTO Customer (Name, Address, Phone) VALUES
+('Rajesh Kumar', '123 MG Road, Bengaluru, Karnataka', '9876543210'),
+('Anita Sharma', '45 Connaught Place, New Delhi', '9123456780'),
+('Suresh Patel', '22 Marine Drive, Mumbai, Maharashtra', '9988776655'),
+('Priya Singh', '56 Park Street, Kolkata, West Bengal', '9876512345'),
+('Amit Verma', '89 Residency Road, Pune, Maharashtra', '9012345678');
+
+
+-- Branches
+INSERT INTO Branch (BranchName, Location) VALUES
+('MG Road Branch', 'Bengaluru'),
+('Connaught Place Branch', 'New Delhi'),
+('Marine Drive Branch', 'Mumbai'),
+('Park Street Branch', 'Kolkata'),
+('Residency Road Branch', 'Pune');
+
+
+-- Accounts (assigning customers and branches)
+INSERT INTO Account (Balance, CustomerID, BranchID) VALUES
+(50000.00, 1, 1),
+(75000.00, 2, 2),
+(62000.00, 3, 3),
+(83000.00, 4, 4),
+(40000.00, 5, 5);
+
+
+-- Loans
+INSERT INTO Loan (Amount, CustomerID) VALUES
+(200000.00, 1),
+(150000.00, 3),
+(300000.00, 4);
+
+
+-- Transactions
+INSERT INTO Transaction (AcctNo, TxnType, Amount, TxnDate) VALUES
+(1, 'Deposit', 10000.00, '2025-05-01'),
+(2, 'Withdrawal', 5000.00, '2025-05-03'),
+(3, 'Deposit', 7000.00, '2025-05-05'),
+(4, 'Transfer', 12000.00, '2025-05-10'),
+(5, 'Deposit', 8000.00, '2025-05-12');
+
+
+-- CREATE VIEWS
+
+
+CREATE VIEW CustomerAccounts AS
+SELECT C.CustomerID, C.Name, A.AcctNo, A.Balance, B.BranchName
+FROM Customer C
+JOIN Account A ON C.CustomerID = A.CustomerID
+JOIN Branch B ON A.BranchID = B.BranchID;
+
+
+CREATE VIEW CustomerLoans AS
+SELECT C.CustomerID, C.Name, L.LoanID, L.Amount
+FROM Customer C
+JOIN Loan L ON C.CustomerID = L.CustomerID;
+
+
+-- CREATE INDEX
+
+
+CREATE INDEX CustomerNameIndex ON Customer(Name);
+
+
+
+
+2: Draw an ER for Company database with atleast 4 entities and convert them into tables.
+Perform DDL on Above converted tables.
+1. Create tables with all constraints
+2. create views on any two tables using conditions
+3. create  index called EmployeeId  for the department table. Entries should be in ascending order by department id and then by  employee id within each department.
+4. create sequence on Employee id.
+—
+CREATE TABLE Department (
+    DeptID INT PRIMARY KEY,
+    DeptName VARCHAR(100) NOT NULL,
+    ManagerID INT
+);
+
+
+CREATE TABLE Employee (
+    EmployeeID INT AUTO_INCREMENT PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    DeptID INT,
+    Salary DECIMAL(10,2),
+    FOREIGN KEY (DeptID) REFERENCES Department(DeptID)
+);
+
+
+-- Update ManagerID foreign key after Employee table creation
+ALTER TABLE Department
+ADD CONSTRAINT fk_Manager FOREIGN KEY (ManagerID) REFERENCES Employee(EmployeeID);
+
+
+CREATE TABLE Project (
+    ProjectID INT PRIMARY KEY,
+    ProjectName VARCHAR(100) NOT NULL,
+    DeptID INT,
+    FOREIGN KEY (DeptID) REFERENCES Department(DeptID)
+);
+
+
+CREATE TABLE WorksOn (
+    EmployeeID INT,
+    ProjectID INT,
+    Hours DECIMAL(5,2),
+    PRIMARY KEY (EmployeeID, ProjectID),
+    FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID),
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+
+-- 2. Insert sample data
+
+
+INSERT INTO Department (DeptID, DeptName) VALUES
+(1, 'HR'),
+(2, 'IT'),
+(3, 'Finance');
+
+
+INSERT INTO Employee (FirstName, LastName, DeptID, Salary) VALUES
+('Rajesh', 'Kumar', 1, 50000),
+('Anita', 'Sharma', 2, 60000),
+('Sunil', 'Patel', 2, 65000),
+('Pooja', 'Singh', 3, 70000);
+
+
+-- Update ManagerID for Departments
+
+
+UPDATE Department SET ManagerID = 1 WHERE DeptID = 1;
+UPDATE Department SET ManagerID = 2 WHERE DeptID = 2;
+UPDATE Department SET ManagerID = 4 WHERE DeptID = 3;
+
+
+INSERT INTO Project (ProjectID, ProjectName, DeptID) VALUES
+(101, 'Project Alpha', 2),
+(102, 'Project Beta', 3);
+
+
+INSERT INTO WorksOn (EmployeeID, ProjectID, Hours) VALUES
+(2, 101, 40),
+(3, 101, 20),
+(4, 102, 35);
+
+
+-- 3. Create views
+
+
+CREATE VIEW EmployeeDeptView AS
+SELECT E.EmployeeID, E.FirstName, E.LastName, D.DeptName
+FROM Employee E
+JOIN Department D ON E.DeptID = D.DeptID;
+
+
+CREATE VIEW ProjectDeptView AS
+SELECT P.ProjectID, P.ProjectName, D.DeptName, D.ManagerID
+FROM Project P
+JOIN Department D ON P.DeptID = D.DeptID;
+
+
+-- 4. Create index EmployeeId on Department (by DeptID ASC, ManagerID ASC)
+
+
+CREATE INDEX EmployeeId ON Department (DeptID ASC, ManagerID ASC);
+
+
+
+
+8 Draw ER for Library database with atleast 5 entities and convert them into tables.
+Perform DDL on above converted tables.
+1. Create tables with all constraints (Based on ERD cardinalities)
+2. Create views on any two tables using join condition
+3. Create index called Lib_Index1. Entries should be in ascending order by Author name.
+4. Create sequence on Bookid.
+–
+-- Create tables with constraints
+
+
+CREATE TABLE Author (
+    AuthorID INT PRIMARY KEY,
+    AuthorName VARCHAR(100) NOT NULL
+);
+
+
+CREATE TABLE Publisher (
+    PublisherID INT PRIMARY KEY,
+    PublisherName VARCHAR(100) NOT NULL
+);
+
+
+CREATE TABLE Member (
+    MemberID INT PRIMARY KEY,
+    MemberName VARCHAR(100) NOT NULL,
+    Address VARCHAR(200)
+);
+
+
+CREATE TABLE Book (
+    BookID INT AUTO_INCREMENT PRIMARY KEY,
+    Title VARCHAR(200) NOT NULL,
+    AuthorID INT,
+    PublisherID INT,
+    FOREIGN KEY (AuthorID) REFERENCES Author(AuthorID),
+    FOREIGN KEY (PublisherID) REFERENCES Publisher(PublisherID)
+);
+
+
+CREATE TABLE Borrow (
+    BorrowID INT AUTO_INCREMENT PRIMARY KEY,
+    BookID INT,
+    MemberID INT,
+    BorrowDate DATE,
+    ReturnDate DATE,
+    FOREIGN KEY (BookID) REFERENCES Book(BookID),
+    FOREIGN KEY (MemberID) REFERENCES Member(MemberID)
+);
+
+
+-- Insert sample data
+
+
+INSERT INTO Author (AuthorID, AuthorName) VALUES
+(1, 'Ruskin Bond'),
+(2, 'Amish Tripathi'),
+(3, 'Arundhati Roy');
+
+
+INSERT INTO Publisher (PublisherID, PublisherName) VALUES
+(1, 'Penguin India'),
+(2, 'HarperCollins');
+
+
+INSERT INTO Member (MemberID, MemberName, Address) VALUES
+(101, 'Rajesh Kumar', 'Delhi'),
+(102, 'Anita Sharma', 'Mumbai');
+
+
+INSERT INTO Book (Title, AuthorID, PublisherID) VALUES
+('The Blue Umbrella', 1, 1),
+('The Immortals of Meluha', 2, 2),
+('The God of Small Things', 3, 1);
+
+
+INSERT INTO Borrow (BookID, MemberID, BorrowDate, ReturnDate) VALUES
+(1, 101, '2025-05-01', '2025-05-10'),
+(3, 102, '2025-05-05', NULL);
+
+
+-- Create views using JOIN
+
+
+CREATE VIEW BookAuthors AS
+SELECT B.BookID, B.Title, A.AuthorName
+FROM Book B
+JOIN Author A ON B.AuthorID = A.AuthorID;
+
+
+CREATE VIEW MemberBorrowedBooks AS
+SELECT M.MemberName, B.Title, BR.BorrowDate, BR.ReturnDate
+FROM Member M
+JOIN Borrow BR ON M.MemberID = BR.MemberID
+JOIN Book B ON BR.BookID = B.BookID;
+
+
+-- Create index on AuthorName ascending
+
+
+CREATE INDEX Lib_Index1 ON Author(AuthorName ASC);
+
+
+10  Implement  SQL DDL statements which demonstrate the use of SQL objects such as Table, View, Index, Sequence, Synonym for following relational schema:
+ 
+Borrower(Rollin, Name, DateofIssue, NameofBook, Status)
+–
+-- Create the Borrower table with necessary constraints
+CREATE TABLE borrower (
+Rollin INT AUTO_INCREMENT PRIMARY KEY, -- Unique Roll number (acts like a sequence)
+Name VARCHAR(100) NOT NULL, -- Name of the borrower
+DateofIssue DATE NOT NULL, -- Book issue date
+NameofBook VARCHAR(100) NOT NULL, -- Title of the borrowed book
+Status ENUM('Issued', 'Returned') NOT NULL -- Book status (Issued/Returned)
+);
+-- Insert sample records into Borrower table
+INSERT INTO borrower (Name, DateofIssue, NameofBook, Status) VALUES
+('Amit Sharma', '2025-05-01', 'Data Structures in C', 'Issued'),
+('Pooja Rani', '2025-05-03', 'Operating Systems', 'Returned'),
+('Ravi Kumar', '2025-05-04', 'Database Management', 'Issued'),
+('Meena Verma', '2025-05-05', 'Computer Networks', 'Returned'),
+('Ankit Joshi', '2025-05-06', 'Python Programming', 'Issued');
+-- Create a view showing records where books are still issued
+CREATE VIEW IssuedBooks AS
+SELECT
+Rollin,
+Name,
+NameofBook,
+DateofIssue
+FROM
+borrower
+WHERE
+Status = 'Issued';
+-- Create index on NameofBook for quick lookup by book title
+CREATE INDEX idx_BookName ON borrower(NameofBook ASC);
+-- Simulate a synonym using a view (alias for full table)
+CREATE VIEW borrower_synonym AS
+SELECT * FROM borrower;
+-- Optional: View all records using the synonym
+-- SELECT * FROM borrower_synonym;
+-- Optional: View only currently issued books
+-- SELECT * FROM IssuedBooks;
+
+
+11 Design at least 10 SQL queries for suitable database application using SQL DML statements: all types of Join, Sub-Query and View.
+
+
+–
+-- Create Tables
+CREATE TABLE customer (
+CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+Name VARCHAR(50) NOT NULL,
+Address VARCHAR(100),
+Phone VARCHAR(15)
+);
+CREATE TABLE branch (
+BranchID INT AUTO_INCREMENT PRIMARY KEY,
+BranchName VARCHAR(50) NOT NULL,
+Location VARCHAR(100)
+);
+CREATE TABLE account (
+AcctNo INT AUTO_INCREMENT PRIMARY KEY,
+Balance DECIMAL(10,2) DEFAULT 0,
+CustomerID INT,
+BranchID INT,
+FOREIGN KEY (CustomerID) REFERENCES customer(CustomerID),
+FOREIGN KEY (BranchID) REFERENCES branch(BranchID)
+);
+-- Insert Sample Data
+INSERT INTO customer (Name, Address, Phone) VALUES
+('Ravi Kumar', 'Bengaluru', '9876543210'),
+('Anjali Sharma', 'Kolkata', '9123456789'),
+('Arjun Patel', 'Mumbai', '9988776655');
+INSERT INTO branch (BranchName, Location) VALUES
+('Bengaluru Branch', 'Bengaluru'),
+('Kolkata Branch', 'Kolkata');
+INSERT INTO account (Balance, CustomerID, BranchID) VALUES
+(15000, 1, 1),
+(20000, 2, 2),
+(12000, 3, 1);
+-- Queries
+-- 1. Inner Join: Customer with their account balance and branch
+SELECT c.Name, a.Balance, b.BranchName
+FROM customer c
+JOIN account a ON c.CustomerID = a.CustomerID
+JOIN branch b ON a.BranchID = b.BranchID;
+-- 2. Left Join: All customers with their accounts (if any)
+SELECT c.Name, a.AcctNo, a.Balance
+FROM customer c
+LEFT JOIN account a ON c.CustomerID = a.CustomerID;
+-- 3. Subquery: Customers with accounts having balance > 15000
+SELECT Name
+FROM customer
+WHERE CustomerID IN (SELECT CustomerID FROM account WHERE Balance > 15000);
+-- 4. Subquery in SELECT: Customers and number of accounts
+SELECT c.Name,
+(SELECT COUNT(*) FROM account a WHERE a.CustomerID = c.CustomerID) AS AccountCount
+FROM customer c;
+-- 5. Create View: Customer account details
+CREATE VIEW CustomerAccountView AS
+SELECT c.Name, a.AcctNo, a.Balance
+FROM customer c
+JOIN account a ON c.CustomerID = a.CustomerID;
+-- 6. Query the view
+SELECT * FROM CustomerAccountView;
+-- 7. Aggregate: Total balance per branch
+SELECT b.BranchName, SUM(a.Balance) AS TotalBalance
+FROM account a
+JOIN branch b ON a.BranchID = b.BranchID
+GROUP BY b.BranchName;
+-- 8. Simple Inner Join: Accounts with branch info
+SELECT a.AcctNo, a.Balance, b.BranchName
+FROM account a
+JOIN branch b ON a.BranchID = b.BranchID;
+-- 9. Find accounts with balance above average balance
+SELECT AcctNo, Balance
+FROM account
+WHERE Balance > (SELECT AVG(Balance) FROM account);
+-- 10. List customers without accounts
+SELECT Name
+FROM customer
+WHERE CustomerID NOT IN (SELECT CustomerID FROM account);
+
+
+13 Create the instance of the COMPANY which consists of the following tables:
+EMPLOYEE(Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary,  Dno)
+DEPARTEMENT(Dname, Dno, Mgr_ssn, Mgr_start_date)
+DEPT_LOCATIONS(Dnumber, Dlocation)
+PROJECT(Pname, Pnumber, Plocation, Dno)
+WORKS_ON(Essn, Pno, Hours)
+DEPENDENT(Essn, Dependent_name, Sex, Bdate, Relationship)
+ 
+Perform following queries
+1.               For every project located in ‘Stafford’, list the project number, the controlling department number, and the department manager’s last name,address, and birth date.
+2.               Make a list of all project numbers for projects that involve an employee whose last name is ‘Smith’, either as a worker or as a manager of the department that controls the project.
+3.               Retrieve all employees whose address is in Houston, Texas.
+4.               Show the resulting salaries if every employee working on the ‘ProductX’ project is given a 10 percent raise.
+–
+CREATE TABLE EMPLOYEE (
+    Fname VARCHAR(20),
+    Minit CHAR(1),
+    Lname VARCHAR(20),
+    Ssn CHAR(9) PRIMARY KEY,
+    Bdate DATE,
+    Address VARCHAR(100),
+    Sex CHAR(1),
+    Salary DECIMAL(10,2),
+    Dno INT
+);
+
+
+CREATE TABLE DEPARTMENT (
+    Dname VARCHAR(20),
+    Dno INT PRIMARY KEY,
+    Mgr_ssn CHAR(9),
+    Mgr_start_date DATE
+);
+
+
+CREATE TABLE DEPT_LOCATIONS (
+    Dnumber INT,
+    Dlocation VARCHAR(50),
+    FOREIGN KEY (Dnumber) REFERENCES DEPARTMENT(Dno)
+);
+
+
+CREATE TABLE PROJECT (
+    Pname VARCHAR(20),
+    Pnumber INT PRIMARY KEY,
+    Plocation VARCHAR(50),
+    Dno INT,
+    FOREIGN KEY (Dno) REFERENCES DEPARTMENT(Dno)
+);
+
+
+CREATE TABLE WORKS_ON (
+    Essn CHAR(9),
+    Pno INT,
+    Hours DECIMAL(3,1),
+    FOREIGN KEY (Essn) REFERENCES EMPLOYEE(Ssn),
+    FOREIGN KEY (Pno) REFERENCES PROJECT(Pnumber)
+);
+
+
+CREATE TABLE DEPENDENT (
+    Essn CHAR(9),
+    Dependent_name VARCHAR(20),
+    Sex CHAR(1),
+    Bdate DATE,
+    Relationship VARCHAR(20),
+    FOREIGN KEY (Essn) REFERENCES EMPLOYEE(Ssn)
+);
+
+
+-- Departments
+INSERT INTO DEPARTMENT VALUES ('Research', 1, '123456789', '2020-01-01');
+INSERT INTO DEPARTMENT VALUES ('Administration', 2, '987654321', '2021-06-01');
+
+
+-- Employees
+INSERT INTO EMPLOYEE VALUES ('John', 'B', 'Smith', '123456789', '1980-05-15', 'Houston, Texas', 'M', 50000, 1);
+INSERT INTO EMPLOYEE VALUES ('Anna', 'K', 'Johnson', '987654321', '1985-09-20', 'Dallas, Texas', 'F', 60000, 2);
+INSERT INTO EMPLOYEE VALUES ('Mike', 'T', 'Lee', '456789123', '1990-03-10', 'Houston, Texas', 'M', 55000, 1);
+
+
+-- Locations
+INSERT INTO DEPT_LOCATIONS VALUES (1, 'Stafford');
+INSERT INTO DEPT_LOCATIONS VALUES (2, 'Dallas');
+
+
+-- Projects
+INSERT INTO PROJECT VALUES ('ProductX', 101, 'Stafford', 1);
+INSERT INTO PROJECT VALUES ('Alpha', 102, 'Dallas', 2);
+
+
+-- Works_on
+INSERT INTO WORKS_ON VALUES ('123456789', 101, 10);
+INSERT INTO WORKS_ON VALUES ('987654321', 102, 5);
+INSERT INTO WORKS_ON VALUES ('456789123', 101, 8);
+
+
+-- Dependents
+INSERT INTO DEPENDENT VALUES ('123456789', 'Lucy', 'F', '2010-04-15', 'Daughter');
+
+
+SELECT P.Pnumber, P.Dno, E.Lname, E.Address, E.Bdate
+FROM PROJECT P
+JOIN DEPARTMENT D ON P.Dno = D.Dno
+JOIN EMPLOYEE E ON D.Mgr_ssn = E.Ssn
+WHERE P.Plocation = 'Stafford';
+
+
+-- As worker
+SELECT DISTINCT P.Pnumber
+FROM EMPLOYEE E
+JOIN WORKS_ON W ON E.Ssn = W.Essn
+JOIN PROJECT P ON W.Pno = P.Pnumber
+WHERE E.Lname = 'Smith'
+
+
+UNION
+
+
+-- As manager
+SELECT DISTINCT P.Pnumber
+FROM EMPLOYEE E
+JOIN DEPARTMENT D ON E.Ssn = D.Mgr_ssn
+JOIN PROJECT P ON D.Dno = P.Dno
+WHERE E.Lname = 'Smith';
+
+
+SELECT * FROM EMPLOYEE
+WHERE Address LIKE '%Houston, Texas%';
+
+
+SELECT E.Fname, E.Lname, E.Salary, E.Salary * 1.10 AS New_Salary
+FROM EMPLOYEE E
+JOIN WORKS_ON W ON E.Ssn = W.Essn
+JOIN PROJECT P ON W.Pno = P.Pnumber
+WHERE P.Pname = 'ProductX';
+
+
+ 
+14 Implement all SQL DML opeartions with  operators, functions, and set operator for given schema:
+Account(Acc_no, branch_name,balance)
+branch(branch_name,branch_city,assets)
+customer(cust_name,cust_street,cust_city)
+Depositor(cust_name,acc_no)
+Loan(loan_no,branch_name,amount)
+Borrower(cust_name,loan_no)
+ 
+Solve following query:
+1.             Find the average account balance at each branch
+2.             Find no. of depositors at each branch.
+3.             Find the branches where average account balance > 12000.
+4.             Find number of tuples in customer relation.
+
+
+–
+CREATE TABLE Account (
+    Acc_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    balance DECIMAL(10,2)
+);
+
+
+CREATE TABLE branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50),
+    assets DECIMAL(15,2)
+);
+
+
+CREATE TABLE customer (
+    cust_name VARCHAR(50) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(50)
+);
+
+
+CREATE TABLE Depositor (
+    cust_name VARCHAR(50),
+    acc_no INT,
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(Acc_no)
+);
+
+
+CREATE TABLE Loan (
+    loan_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    amount DECIMAL(10,2)
+);
+
+
+CREATE TABLE Borrower (
+    cust_name VARCHAR(50),
+    loan_no INT,
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+
+INSERT INTO branch VALUES ('Main', 'Mumbai', 50000000);
+INSERT INTO branch VALUES ('West', 'Delhi', 30000000);
+
+
+INSERT INTO Account VALUES (1001, 'Main', 15000);
+INSERT INTO Account VALUES (1002, 'Main', 8000);
+INSERT INTO Account VALUES (1003, 'West', 13000);
+INSERT INTO Account VALUES (1004, 'West', 17000);
+
+
+INSERT INTO customer VALUES ('Alice', 'MG Road', 'Mumbai');
+INSERT INTO customer VALUES ('Bob', 'Linking Road', 'Delhi');
+INSERT INTO customer VALUES ('Charlie', 'Marine Drive', 'Mumbai');
+
+
+INSERT INTO Depositor VALUES ('Alice', 1001);
+INSERT INTO Depositor VALUES ('Bob', 1002);
+INSERT INTO Depositor VALUES ('Charlie', 1003);
+INSERT INTO Depositor VALUES ('Alice', 1004); -- Alice has 2 accounts
+
+
+INSERT INTO Loan VALUES (201, 'Main', 40000);
+INSERT INTO Loan VALUES (202, 'West', 30000);
+
+
+INSERT INTO Borrower VALUES ('Alice', 201);
+INSERT INTO Borrower VALUES ('Bob', 202);
+
+
+
+
+
+
+SELECT branch_name, AVG(balance) AS avg_balance
+FROM Account
+GROUP BY branch_name;
+
+
+SELECT A.branch_name, COUNT(DISTINCT D.cust_name) AS num_depositors
+FROM Depositor D
+JOIN Account A ON D.acc_no = A.Acc_no
+GROUP BY A.branch_name;
+
+
+SELECT branch_name
+FROM Account
+GROUP BY branch_name
+HAVING AVG(balance) > 12000;
+
+
+SELECT COUNT(*) AS total_customers
+FROM customer;
+
+
+
+
+15 Implement all SQL DML opeartions with  operators, functions, and set operator for given schema:
+ 
+Account(Acc_no, branch_name,balance)
+branch(branch_name,branch_city,assets)
+customer(cust_name,cust_street,cust_city)
+Depositor(cust_name,acc_no)
+Loan(loan_no,branch_name,amount)
+Borrower(cust_name,loan_no)
+ 
+Create above tables with appropriate constraints like primary key, foreign key, check constrains, not null etc.
+ 
+Solve following query:
+ 
+1.             Find the names of all branches in loan relation.
+2.             Find all loan numbers for loans made at Akurdi Branch with loan amount > 12000.
+3.             Find all customers who have a loan from bank.
+4.             Find their names,loan_no and loan amount.
+
+
+–
+CREATE TABLE branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50) NOT NULL,
+    assets DECIMAL(15,2) CHECK (assets >= 0)
+);
+
+
+CREATE TABLE Account (
+    acc_no INT PRIMARY KEY,
+    branch_name VARCHAR(50) NOT NULL,
+    balance DECIMAL(10,2) CHECK (balance >= 0),
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+
+CREATE TABLE customer (
+    cust_name VARCHAR(50) PRIMARY KEY,
+    cust_street VARCHAR(100) NOT NULL,
+    cust_city VARCHAR(50) NOT NULL
+);
+
+
+CREATE TABLE Depositor (
+    cust_name VARCHAR(50),
+    acc_no INT,
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
+);
+
+
+CREATE TABLE Loan (
+    loan_no INT PRIMARY KEY,
+    branch_name VARCHAR(50) NOT NULL,
+    amount DECIMAL(10,2) CHECK (amount > 0),
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+
+CREATE TABLE Borrower (
+    cust_name VARCHAR(50),
+    loan_no INT,
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+
+-- Branches
+INSERT INTO branch VALUES ('Akurdi', 'Pune', 1000000);
+INSERT INTO branch VALUES ('Hadapsar', 'Pune', 1500000);
+
+
+-- Accounts
+INSERT INTO Account VALUES (101, 'Akurdi', 15000);
+INSERT INTO Account VALUES (102, 'Hadapsar', 18000);
+
+
+-- Customers
+INSERT INTO customer VALUES ('Alice', 'MG Road', 'Pune');
+INSERT INTO customer VALUES ('Bob', 'FC Road', 'Pune');
+INSERT INTO customer VALUES ('Charlie', 'BT Kawade', 'Pune');
+
+
+-- Depositors
+INSERT INTO Depositor VALUES ('Alice', 101);
+INSERT INTO Depositor VALUES ('Bob', 102);
+
+
+-- Loans
+INSERT INTO Loan VALUES (201, 'Akurdi', 13000);
+INSERT INTO Loan VALUES (202, 'Hadapsar', 9000);
+INSERT INTO Loan VALUES (203, 'Akurdi', 15000);
+
+
+-- Borrowers
+INSERT INTO Borrower VALUES ('Alice', 201);
+INSERT INTO Borrower VALUES ('Charlie', 203);
+
+
+-- Update balance for account 101
+UPDATE Account SET balance = balance + 2000 WHERE acc_no = 101;
+
+
+-- Delete a borrower (Example)
+DELETE FROM Borrower WHERE cust_name = 'Charlie';
+
+
+SELECT DISTINCT branch_name FROM Loan;
+
+
+SELECT loan_no FROM Loan
+WHERE branch_name = 'Akurdi' AND amount > 12000;
+
+
+SELECT DISTINCT cust_name FROM Borrower;
+
+
+SELECT B.cust_name, L.loan_no, L.amount
+FROM Borrower B
+JOIN Loan L ON B.loan_no = L.loan_no;
+
+
+SELECT UPPER(cust_name) FROM customer;
+
+
+SELECT cust_name FROM Borrower
+UNION
+SELECT cust_name FROM Depositor;
+
+
+
+
+18  Implement all SQL DML opeartions with  operators, functions, and set operator for given schema:
+ 
+Account(Acc_no, branch_name,balance)
+branch(branch_name,branch_city,assets)
+customer(cust_name,cust_street,cust_city)
+Depositor(cust_name,acc_no)
+Loan(loan_no,branch_name,amount)
+Borrower(cust_name,loan_no)
+ 
+Create above tables with appropriate constraints like primary key, foreign key, check constrains, not null etc.Solve following query:
+ 
+1.             Find all customers who have an account or loan or both at bank.
+2.             Find all customers who have both account and loan at bank.
+3.             Find all customer who have account but no loan at the bank.
+4.             Find average account balance at Akurdi branch.
+–
+CREATE TABLE branch (
+  branch_name VARCHAR(30) PRIMARY KEY,
+  branch_city VARCHAR(30) NOT NULL,
+  assets INT CHECK (assets >= 0)
+);
+
+
+CREATE TABLE Account (
+  acc_no INT PRIMARY KEY,
+  branch_name VARCHAR(30),
+  balance DECIMAL(10,2) CHECK (balance >= 0),
+  FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+
+CREATE TABLE customer (
+  cust_name VARCHAR(50) PRIMARY KEY,
+  cust_street VARCHAR(50) NOT NULL,
+  cust_city VARCHAR(30) NOT NULL
+);
+
+
+CREATE TABLE Depositor (
+  cust_name VARCHAR(50),
+  acc_no INT,
+  PRIMARY KEY (cust_name, acc_no),
+  FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+  FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
+);
+
+
+CREATE TABLE Loan (
+  loan_no INT PRIMARY KEY,
+  branch_name VARCHAR(30),
+  amount DECIMAL(10,2) CHECK (amount > 0),
+  FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+
+CREATE TABLE Borrower (
+  cust_name VARCHAR(50),
+  loan_no INT,
+  PRIMARY KEY (cust_name, loan_no),
+  FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+  FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+
+-- Branches
+INSERT INTO branch VALUES ('Akurdi', 'Pune', 1000000);
+INSERT INTO branch VALUES ('ShivajiNagar', 'Pune', 1200000);
+
+
+-- Customers
+INSERT INTO customer VALUES ('Ravi', 'MG Road', 'Pune');
+INSERT INTO customer VALUES ('Sneha', 'FC Road', 'Pune');
+INSERT INTO customer VALUES ('Amit', 'Baner', 'Pune');
+INSERT INTO customer VALUES ('Priya', 'Camp', 'Pune');
+
+
+-- Accounts
+INSERT INTO Account VALUES (101, 'Akurdi', 15000.00);
+INSERT INTO Account VALUES (102, 'Akurdi', 8000.00);
+INSERT INTO Account VALUES (103, 'ShivajiNagar', 12000.00);
+
+
+-- Depositors
+INSERT INTO Depositor VALUES ('Ravi', 101);
+INSERT INTO Depositor VALUES ('Sneha', 102);
+INSERT INTO Depositor VALUES ('Amit', 103);
+
+
+-- Loans
+INSERT INTO Loan VALUES (201, 'Akurdi', 25000.00);
+INSERT INTO Loan VALUES (202, 'ShivajiNagar', 18000.00);
+
+
+-- Borrowers
+INSERT INTO Borrower VALUES ('Ravi', 201);
+INSERT INTO Borrower VALUES ('Priya', 202);
+
+
+SELECT cust_name FROM Depositor
+UNION
+SELECT cust_name FROM Borrower;
+
+
+SELECT cust_name FROM Depositor
+INTERSECT
+SELECT cust_name FROM Borrower;
+
+
+SELECT cust_name FROM Depositor
+EXCEPT
+SELECT cust_name FROM Borrower;
+
+
+SELECT AVG(balance) AS Avg_Balance
+FROM Account
+WHERE branch_name = 'Akurdi';
+
+
+
+
+19  Implement all SQL DML operations with  operators, functions, and set operator for given schema:
+ 
+Account(Acc_no, branch_name,balance)
+branch(branch_name,branch_city,assets)
+customer(cust_name,cust_street,cust_city)
+Depositor(cust_name,acc_no)
+Loan(loan_no,branch_name,amount)
+Borrower(cust_name,loan_no)
+ 
+Solve following query:
+ 
+1.              Calculate total loan amount given by bank.
+2.              Delete all loans with loan amount between 1300 and 1500.
+3.             Delete all tuples at every branch located in Nigdi.
+ 
+–
+-- Create tables if not created already (with constraints)
+CREATE TABLE IF NOT EXISTS branch (
+branch_name VARCHAR(50) PRIMARY KEY,
+branch_city VARCHAR(50) NOT NULL,
+assets DECIMAL(15,2) NOT NULL CHECK (assets >= 0)
+);
+CREATE TABLE IF NOT EXISTS customer (
+cust_name VARCHAR(50) PRIMARY KEY,
+cust_street VARCHAR(100),
+cust_city VARCHAR(50)
+);
+CREATE TABLE IF NOT EXISTS account (
+acc_no INT PRIMARY KEY,
+branch_name VARCHAR(50) NOT NULL,
+balance DECIMAL(10,2) NOT NULL CHECK (balance >= 0),
+FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+CREATE TABLE IF NOT EXISTS depositor (
+cust_name VARCHAR(50) NOT NULL,
+acc_no INT NOT NULL,
+PRIMARY KEY (cust_name, acc_no),
+FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+FOREIGN KEY (acc_no) REFERENCES account(acc_no)
+);
+CREATE TABLE IF NOT EXISTS loan (
+loan_no INT PRIMARY KEY,
+branch_name VARCHAR(50) NOT NULL,
+amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+CREATE TABLE IF NOT EXISTS borrower (
+cust_name VARCHAR(50) NOT NULL,
+loan_no INT NOT NULL,
+PRIMARY KEY (cust_name, loan_no),
+FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+FOREIGN KEY (loan_no) REFERENCES loan(loan_no)
+);
+-- Sample Data Inserts (optional if tables are empty)
+INSERT IGNORE INTO branch VALUES
+('Akurdi', 'Pune', 1500000),
+('Bengaluru', 'Bengaluru', 1000000),
+('Mumbai', 'Mumbai', 850000),
+('Nigdi', 'Pune', 700000);
+INSERT IGNORE INTO customer VALUES
+('Ravi Kumar', 'MG Road', 'Bengaluru'),
+('Anjali Sharma', 'Park Street', 'Kolkata'),
+('Arjun Patel', 'Marine Drive', 'Mumbai'),
+('Sneha Gupta', 'Connaught Place', 'Delhi'),
+('Vikram Singh', 'Residency Road', 'Chennai');
+INSERT IGNORE INTO account VALUES
+(101, 'Akurdi', 15000),
+(102, 'Mumbai', 12000),
+(103, 'Bengaluru', 13000),
+(104, 'Nigdi', 11000);
+INSERT IGNORE INTO depositor VALUES
+('Ravi Kumar', 101),
+('Arjun Patel', 102),
+('Sneha Gupta', 103),
+('Vikram Singh', 104);
+INSERT IGNORE INTO loan VALUES
+(201, 'Akurdi', 20000),
+(202, 'Mumbai', 1400),
+(203, 'Nigdi', 1350),
+(204, 'Akurdi', 10000);
+INSERT IGNORE INTO borrower VALUES
+('Ravi Kumar', 201),
+('Arjun Patel', 202),
+('Anjali Sharma', 203);
+-- Queries for the given problems
+-- 1. Calculate total loan amount given by bank
+SELECT SUM(amount) AS TotalLoanAmount FROM loan;
+-- 2. Delete all loans with loan amount between 1300 and 1500
+DELETE FROM borrower WHERE loan_no IN (
+        SELECT loan_no FROM loan WHERE amount BETWEEN 1300 AND 1500
+);
+DELETE FROM loan WHERE amount BETWEEN 1300 AND 1500;
+
+
+-- 3. Delete all tuples at every branch located in Nigdi
+-- Step 1: Delete dependent tuples from borrower and depositor related to Nigdi branch
+DELETE b
+FROM borrower b
+JOIN loan l ON b.loan_no = l.loan_no
+WHERE l.branch_name = 'Nigdi';
+DELETE d
+FROM depositor d
+JOIN account a ON d.acc_no = a.acc_no
+WHERE a.branch_name = 'Nigdi';
+-- Step 2: Delete loans and accounts of Nigdi branch
+DELETE FROM loan WHERE branch_name = 'Nigdi';
+DELETE FROM account WHERE branch_name = 'Nigdi';
+-- Step 3: Delete the branch 'Nigdi' from branch table
+DELETE FROM branch WHERE branch_name = 'Nigdi';
+
+
+20  Create the following tables.
+1.           Deposit (actno,cname,bname,amount,adate)
+2.          Branch (bname,city)
+3.          Customers (cname, city)
+4.          Borrow(loanno,cname,bname, amount)
+Add primary key and foreign key wherever applicable.Insert data into the above created tables.
+1.               Display account date of customers “ABC”.
+2.               Modify the size of attribute of amount in deposit
+3.               Display names of customers living in city pune.
+4.               Display  name of the city where branch “OBC” is located.
+5.               Find the number of tuples in the customer relation
+–
+-- Table: Branch
+CREATE TABLE Branch (
+  bname VARCHAR(30) PRIMARY KEY,
+  city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Customers
+CREATE TABLE Customers (
+  cname VARCHAR(30) PRIMARY KEY,
+  city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Deposit
+CREATE TABLE Deposit (
+  actno INT PRIMARY KEY,
+  cname VARCHAR(30),
+  bname VARCHAR(30),
+  amount DECIMAL(10,2),
+  adate DATE,
+  FOREIGN KEY (cname) REFERENCES Customers(cname),
+  FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Table: Borrow
+CREATE TABLE Borrow (
+  loanno INT PRIMARY KEY,
+  cname VARCHAR(30),
+  bname VARCHAR(30),
+  amount DECIMAL(10,2),
+  FOREIGN KEY (cname) REFERENCES Customers(cname),
+  FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Branches
+INSERT INTO Branch VALUES ('SBI', 'Mumbai');
+INSERT INTO Branch VALUES ('OBC', 'Pune');
+INSERT INTO Branch VALUES ('PNB', 'Delhi');
+
+
+-- Customers
+INSERT INTO Customers VALUES ('ABC', 'Pune');
+INSERT INTO Customers VALUES ('XYZ', 'Delhi');
+INSERT INTO Customers VALUES ('LMN', 'Pune');
+
+
+-- Deposits
+INSERT INTO Deposit VALUES (101, 'ABC', 'SBI', 5000.00, '2023-09-15');
+INSERT INTO Deposit VALUES (102, 'XYZ', 'PNB', 8000.00, '2023-09-20');
+INSERT INTO Deposit VALUES (103, 'LMN', 'OBC', 4500.00, '2023-09-25');
+
+
+-- Borrows
+INSERT INTO Borrow VALUES (201, 'ABC', 'SBI', 10000.00);
+INSERT INTO Borrow VALUES (202, 'XYZ', 'PNB', 20000.00);
+
+
+SELECT adate
+FROM Deposit
+WHERE cname = 'ABC';
+
+
+ALTER TABLE Deposit
+MODIFY amount DECIMAL(12,2);
+
+
+SELECT cname
+FROM Customers
+WHERE city = 'Pune';
+
+
+SELECT city
+FROM Branch
+WHERE bname = 'OBC';
+
+
+SELECT COUNT(*) AS total_customers
+FROM Customers;
+
+
+
+
+21 Create following tables:
+1.           Deposit (actno,cname,bname,amount,adate)
+2.          Branch (bname,city)
+3.          Customers (cname, city)
+4.          Borrow(loanno,cname,bname, amount)
+ 
+Add primary key and foreign key wherever applicable. Insert data into the above created tables.
+1.               Display customer name having living city Bombay and branch city Nagpur
+2.               Display customer name having same living city as their branch city
+3.               Display customer name who are borrowers as well as depositors and having living city Nagpur.
+–
+-- Table: Branch
+CREATE TABLE Branch (
+    bname VARCHAR(30) PRIMARY KEY,
+    city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Customers
+CREATE TABLE Customers (
+    cname VARCHAR(30) PRIMARY KEY,
+    city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Deposit
+CREATE TABLE Deposit (
+    actno INT PRIMARY KEY,
+    cname VARCHAR(30),
+    bname VARCHAR(30),
+    amount DECIMAL(10,2),
+    adate DATE,
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Table: Borrow
+CREATE TABLE Borrow (
+    loanno INT PRIMARY KEY,
+    cname VARCHAR(30),
+    bname VARCHAR(30),
+    amount DECIMAL(10,2),
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Insert Branches
+INSERT INTO Branch VALUES ('SBI', 'Bombay');
+INSERT INTO Branch VALUES ('OBC', 'Nagpur');
+INSERT INTO Branch VALUES ('BOI', 'Delhi');
+
+
+-- Insert Customers
+INSERT INTO Customers VALUES ('Ravi', 'Bombay');
+INSERT INTO Customers VALUES ('Seema', 'Nagpur');
+INSERT INTO Customers VALUES ('Amit', 'Nagpur');
+INSERT INTO Customers VALUES ('Kiran', 'Delhi');
+
+
+-- Insert Deposit Records
+INSERT INTO Deposit VALUES (101, 'Ravi', 'SBI', 5000.00, '2023-08-15');
+INSERT INTO Deposit VALUES (102, 'Seema', 'OBC', 7000.00, '2023-09-10');
+INSERT INTO Deposit VALUES (103, 'Kiran', 'BOI', 8000.00, '2023-09-12');
+
+
+-- Insert Borrow Records
+INSERT INTO Borrow VALUES (201, 'Seema', 'OBC', 10000.00);
+INSERT INTO Borrow VALUES (202, 'Amit', 'OBC', 15000.00);
+INSERT INTO Borrow VALUES (203, 'Ravi', 'SBI', 12000.00);
+
+
+SELECT d.cname
+FROM Deposit d
+JOIN Customers c ON d.cname = c.cname
+JOIN Branch b ON d.bname = b.bname
+WHERE c.city = 'Bombay' AND b.city = 'Nagpur';
+
+
+SELECT d.cname
+FROM Deposit d
+JOIN Customers c ON d.cname = c.cname
+JOIN Branch b ON d.bname = b.bname
+WHERE c.city = b.city;
+
+
+SELECT DISTINCT c.cname
+FROM Customers c
+JOIN Deposit d ON c.cname = d.cname
+JOIN Borrow b ON c.cname = b.cname
+WHERE c.city = 'Nagpur';
+
+
+
+
+22 Create the following tables.
+1.           Deposit (actno,cname,bname,amount,adate)
+2.          Branch (bname,city)
+3.          Customers (cname, city)
+4.          Borrow(loanno,cname,bname, amount)
+Add primary key and foreign key wherever applicable.
+Insert data into the above created tables.
+1.               Display loan no and loan amount of borrowers having the same branch as that of sunil.
+2.               Display deposit and loan details of customers in the city where pramod is living.
+3.               Display borrower names having deposit amount greater than 1000 and having the same living city as pramod.
+4.               Display branch and  living city of ‘ABC’
+
+
+–
+-- Table: Branch
+CREATE TABLE Branch (
+    bname VARCHAR(30) PRIMARY KEY,
+    city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Customers
+CREATE TABLE Customers (
+    cname VARCHAR(30) PRIMARY KEY,
+    city VARCHAR(30) NOT NULL
+);
+
+
+-- Table: Deposit
+CREATE TABLE Deposit (
+    actno INT PRIMARY KEY,
+    cname VARCHAR(30),
+    bname VARCHAR(30),
+    amount DECIMAL(10,2),
+    adate DATE,
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Table: Borrow
+CREATE TABLE Borrow (
+    loanno INT PRIMARY KEY,
+    cname VARCHAR(30),
+    bname VARCHAR(30),
+    amount DECIMAL(10,2),
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Insert into Branch
+INSERT INTO Branch VALUES ('SBI', 'Pune');
+INSERT INTO Branch VALUES ('OBC', 'Nagpur');
+INSERT INTO Branch VALUES ('HDFC', 'Mumbai');
+
+
+-- Insert into Customers
+INSERT INTO Customers VALUES ('Sunil', 'Pune');
+INSERT INTO Customers VALUES ('Pramod', 'Nagpur');
+INSERT INTO Customers VALUES ('ABC', 'Mumbai');
+INSERT INTO Customers VALUES ('XYZ', 'Nagpur');
+
+
+-- Insert into Deposit
+INSERT INTO Deposit VALUES (101, 'Sunil', 'SBI', 2000, '2023-08-10');
+INSERT INTO Deposit VALUES (102, 'ABC', 'HDFC', 1500, '2023-09-05');
+INSERT INTO Deposit VALUES (103, 'XYZ', 'OBC', 900, '2023-07-20');
+
+
+-- Insert into Borrow
+INSERT INTO Borrow VALUES (201, 'Sunil', 'SBI', 5000);
+INSERT INTO Borrow VALUES (202, 'Pramod', 'OBC', 10000);
+INSERT INTO Borrow VALUES (203, 'ABC', 'HDFC', 12000);
+
+
+SELECT loanno, amount
+FROM Borrow
+WHERE bname = (
+    SELECT bname
+    FROM Borrow
+    WHERE cname = 'Sunil'
+);
+
+
+SELECT d.actno, d.cname, d.bname, d.amount AS deposit_amount, d.adate
+FROM Deposit d
+JOIN Customers c ON d.cname = c.cname
+WHERE c.city = (SELECT city FROM Customers WHERE cname = 'Pramod')
+UNION
+SELECT NULL, b.cname, b.bname, b.amount, NULL
+FROM Borrow b
+JOIN Customers c ON b.cname = c.cname
+WHERE c.city = (SELECT city FROM Customers WHERE cname = 'Pramod');
+
+
+SELECT DISTINCT b.cname
+FROM Borrow b
+JOIN Customers c1 ON b.cname = c1.cname
+JOIN Deposit d ON b.cname = d.cname
+JOIN Customers c2 ON d.cname = c2.cname
+WHERE d.amount > 1000
+  AND c1.city = (SELECT city FROM Customers WHERE cname = 'Pramod');
+
+
+SELECT d.bname, c.city
+FROM Deposit d
+JOIN Customers c ON d.cname = c.cname
+WHERE c.cname = 'ABC'
+UNION
+SELECT b.bname, c.city
+FROM Borrow b
+JOIN Customers c ON b.cname = c.cname
+WHERE c.cname = 'ABC';
+
+
+24 Create the following tables.
+1.           Deposit (actno,cname,bname,amount,adate)
+2.          Branch (bname,city)
+3.          Customers (cname, city)
+4.          Borrow(loanno,cname,bname, amount)
+Add primary key and foreign key wherever applicable. Insert data into the above created tables.
+1.               Display amount for depositors living in the city where Anil is living.
+2.               Display total loan and  maximum loan taken from KAROLBAGH branch.
+3.               Display total deposit of customers having account date later than ‘1-jan-98’.
+4.               Display maximum deposit of customers living in PUNE.
+
+
+–
+CREATE TABLE Branch (
+    bname VARCHAR(20) PRIMARY KEY,
+    city VARCHAR(20) NOT NULL
+);
+
+
+CREATE TABLE Customers (
+    cname VARCHAR(20) PRIMARY KEY,
+    city VARCHAR(20) NOT NULL
+);
+
+
+CREATE TABLE Deposit (
+    actno INT PRIMARY KEY,
+    cname VARCHAR(20),
+    bname VARCHAR(20),
+    amount DECIMAL(10,2),
+    adate DATE,
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+CREATE TABLE Borrow (
+    loanno INT PRIMARY KEY,
+    cname VARCHAR(20),
+    bname VARCHAR(20),
+    amount DECIMAL(10,2),
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+
+-- Branches
+INSERT INTO Branch VALUES ('SADASHIVNAGAR', 'PUNE');
+INSERT INTO Branch VALUES ('KAROLBAGH', 'DELHI');
+INSERT INTO Branch VALUES ('CAMP', 'PUNE');
+
+
+-- Customers
+INSERT INTO Customers VALUES ('Anil', 'PUNE');
+INSERT INTO Customers VALUES ('Sunita', 'DELHI');
+INSERT INTO Customers VALUES ('Ravi', 'PUNE');
+INSERT INTO Customers VALUES ('Geeta', 'MUMBAI');
+INSERT INTO Customers VALUES ('Ajay', 'DELHI');
+
+
+-- Deposits
+INSERT INTO Deposit VALUES (101, 'Anil', 'SADASHIVNAGAR', 5000, '1998-01-05');
+INSERT INTO Deposit VALUES (102, 'Sunita', 'KAROLBAGH', 7000, '1999-02-15');
+INSERT INTO Deposit VALUES (103, 'Ravi', 'CAMP', 12000, '1999-03-20');
+INSERT INTO Deposit VALUES (104, 'Geeta', 'CAMP', 15000, '1997-11-25');
+
+
+-- Borrows
+INSERT INTO Borrow VALUES (201, 'Ajay', 'KAROLBAGH', 15000);
+INSERT INTO Borrow VALUES (202, 'Ravi', 'KAROLBAGH', 10000);
+INSERT INTO Borrow VALUES (203, 'Anil', 'SADASHIVNAGAR', 5000);
+
+
+SELECT D.cname, D.amount
+FROM Deposit D
+JOIN Customers C ON D.cname = C.cname
+WHERE C.city = (SELECT city FROM Customers WHERE cname = 'Anil');
+
+
+SELECT SUM(amount) AS Total_Loan, MAX(amount) AS Max_Loan
+FROM Borrow
+WHERE bname = 'KAROLBAGH';
+
+
+SELECT SUM(amount) AS Total_Deposit
+FROM Deposit
+WHERE adate > '1998-01-01';
+
+
+SELECT MAX(D.amount) AS Max_Deposit
+FROM Deposit D
+JOIN Customers C ON D.cname = C.cname
+WHERE C.city = 'PUNE';
